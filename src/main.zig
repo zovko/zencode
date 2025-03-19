@@ -9,5 +9,5 @@ pub fn main() !void {
     const input_string = "Gami";
     const result = try base64.encode(alloc, input_string);
     defer alloc.free(result);
-    std.debug.print("test encode string \"{s}\": {s}", .{ input_string, result });
+    std.debug.print("test encode string \"{s}\": {s}\n", .{ input_string, result });
 }
