@@ -23,10 +23,10 @@ pub const Base64 = struct {
 
     pub fn encode(self: Base64, alloc: std.mem.Allocator, input: []const u8) ![]u8 {
         if (input.len == 0) {
-            return "";
+            return error.Invalid;
         }
 
-        const ret: []u8 = try alloc.alloc(u8, try calculate_encode_len(input));
+        const ret = try alloc.alloc(u8, try calculate_encode_len(input));
         var buf = [3]u8{ 0, 0, 0 };
         var buf_count: u8 = 0;
         var ret_index: usize = 0;
