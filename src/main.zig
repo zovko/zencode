@@ -11,20 +11,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(alloc);
     defer std.process.argsFree(alloc, args);
 
-    var input_type: InputType = undefined;
-    if (args.len == 2) {
-        input_type = InputType.string;
-    } else if (args.len == 3) {
-        if (std.mem.eql(u8, args[1], "--string") or std.mem.eql(u8, args[1], "-s")) {
-            input_type = InputType.string;
-        } else if (std.mem.eql(u8, args[1], "--file") or std.mem.eql(u8, args[1], "-f")) {
-            input_type = InputType.file;
-            return error.NotImplemented;
-        } else {
-            std.debug.print("Invalid argument! Expected input type, received {s}\n", .{args[1]});
-            return error.InvalidArgument;
-        }
-    }
+    const input_type = try get_input_type(args);
 
     const base64 = root.Base64.init();
 
@@ -36,4 +23,21 @@ pub fn main() !void {
         },
         else => {},
     }
+}
+
+fn get_input_type(args: [][:0]u8) !InputType {
+    if (args.len == 2) {
+        return InputType.string;
+    } else if (args.len == 3) {
+        if (std.mem.eql(u8, args[1], "--string") or std.mem.eql(u8, args[1], "-s")) {
+            return InputType.string;
+        } else if (std.mem.eql(u8, args[1], "--file") or std.mem.eql(u8, args[1], "-f")) {
+            // return InputType.file;
+            return error.NotImplemented;
+        } else {
+            std.debug.print("Invalid argument! Expected input type, received {s}\n", .{args[1]});
+            return error.InvalidArgument;
+        }
+    }
+    return error.InvalidArgumentCount;
 }
