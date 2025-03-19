@@ -7,5 +7,5 @@ pub fn main() !void {
     const base64 = root.Base64.init();
     const input_string = "Gami";
     const result = try base64.encode(alloc, input_string);
-    std.debug.print("test encode string \"{s}\": {s}", .{ input_string, result });
+    std.debug.print("test encode string \"{s}\": {s}\n", .{ input_string, result });
 }
