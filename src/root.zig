@@ -21,9 +21,24 @@ pub const Base64 = struct {
         return (try std.math.divCeil(usize, input.len, 3) * 4);
     }
 
+    fn calculate_decode_len(input: []const u8) !usize {
+        var decode_len = input.len / 4 * 3;
+        const leftover = input.len % 4;
+        if (leftover == 1) {
+            return error.InvalidPadding;
+        } else {
+            decode_len += leftover * 3 / 4;
+        }
+        return decode_len;
+    }
+
+    fn table_index(self: Base64, input: u8) u8 {
+        return @intCast(std.mem.indexOfScalar(u8, self.table, input).?);
+    }
+
     pub fn encode(self: Base64, alloc: std.mem.Allocator, input: []const u8) ![]u8 {
         if (input.len == 0) {
-            return error.Invalid;
+            return "";
         }
 
         const ret = try alloc.alloc(u8, try calculate_encode_len(input));
@@ -61,9 +76,27 @@ pub const Base64 = struct {
 
         return ret;
     }
+
+    pub fn decode(self: Base64, alloc: std.mem.Allocator, input_string: []const u8) ![]u8 {
+        const result = try alloc.alloc(u8, try calculate_decode_len(input_string));
+        std.debug.assert(input_string.len % 4 == 0);
+
+        var input_index: usize = 0;
+        var output_index: usize = 0;
+
+        while (input_index < input_string.len) {
+            result[output_index + 0] = (self.table_index(input_string[input_index]) << 2) | ((self.table_index(input_string[input_index + 1]) & 0b0011_0000) >> 4);
+            result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4) | ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
+            result[output_index + 2] = ((self.table_index(input_string[input_index + 2]) & 0b0000_0011) << 6) | ((self.table_index(input_string[input_index + 3])));
+            output_index += 3;
+            input_index += 4;
+        }
+
+        return result;
+    }
 };
 
-test "test len calc" {
+test "test encode len calc" {
     try testing.expect(try Base64.calculate_encode_len("") == 0);
     try testing.expect(try Base64.calculate_encode_len("f") == 4);
     try testing.expect(try Base64.calculate_encode_len("fo") == 4);
@@ -73,7 +106,7 @@ test "test len calc" {
     try testing.expect(try Base64.calculate_encode_len("foobar") == 8);
 }
 
-test "test vectors" {
+test "test encoding" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
     const base64 = Base64.init();
@@ -84,4 +117,14 @@ test "test vectors" {
     try testing.expect(std.mem.eql(u8, try base64.encode(alloc, "foob"), "Zm9vYg=="));
     try testing.expect(std.mem.eql(u8, try base64.encode(alloc, "fooba"), "Zm9vYmE="));
     try testing.expect(std.mem.eql(u8, try base64.encode(alloc, "foobar"), "Zm9vYmFy"));
+}
+
+test "test decode" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const alloc = gpa.allocator();
+    const base64 = Base64.init();
+
+    const dcd = try base64.decode(alloc, "Zm9v");
+    std.debug.print("{s}\n", .{dcd});
+    try testing.expect(std.mem.eql(u8, dcd, "foo"));
 }
