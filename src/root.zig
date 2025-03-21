@@ -21,17 +21,6 @@ pub const Base64 = struct {
         return (try std.math.divCeil(usize, input.len, 3) * 4);
     }
 
-    fn calculate_decode_len(input: []const u8) !usize {
-        var decode_len = input.len / 4 * 3;
-        const leftover = input.len % 4;
-        if (leftover == 1) {
-            return error.InvalidPadding;
-        } else {
-            decode_len += leftover * 3 / 4;
-        }
-        return decode_len;
-    }
-
     fn table_index(self: Base64, input: u8) u8 {
         return @intCast(std.mem.indexOfScalar(u8, self.table, input).?);
     }
@@ -75,6 +64,14 @@ pub const Base64 = struct {
         }
 
         return ret;
+    }
+
+    fn calculate_decode_len(input: []const u8) !usize {
+        if (input.len < 4) {
+            return 3;
+        }
+
+        return try std.math.divFloor(usize, input.len, 4) * 3;
     }
 
     pub fn decode(self: Base64, alloc: std.mem.Allocator, input_string: []const u8) ![]u8 {
@@ -126,5 +123,6 @@ test "test decode" {
 
     const dcd = try base64.decode(alloc, "Zm9v");
     std.debug.print("{s}\n", .{dcd});
+    try testing.expect(dcd.len == 3);
     try testing.expect(std.mem.eql(u8, dcd, "foo"));
 }
