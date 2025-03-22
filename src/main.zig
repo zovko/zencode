@@ -32,7 +32,7 @@ pub fn main() !void {
         OperationType.encode => {
             switch (input_type) {
                 InputType.string => {
-                    const result = try base64.encode(alloc, args[1]);
+                    const result = try base64.encode(alloc, args[args.len - 1]);
                     defer alloc.free(result);
                     std.debug.print("{s}\n", .{result});
                 },
@@ -42,7 +42,7 @@ pub fn main() !void {
         OperationType.decode => {
             switch (input_type) {
                 InputType.string => {
-                    const result = try base64.decode(alloc, args[1]);
+                    const result = try base64.decode(alloc, args[args.len - 1]);
                     defer alloc.free(result);
                     std.debug.print("{s}\n", .{result});
                 },
