@@ -90,11 +90,11 @@ pub const Base64 = struct {
             result[output_index + 0] = (self.table_index(input_string[input_index]) << 2) |
                 ((self.table_index(input_string[input_index + 1]) & 0b0011_0000) >> 4);
 
-            result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) &
-                0b0000_1111) << 4) | ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
+            result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4) |
+                ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
 
-            result[output_index + 2] = ((self.table_index(input_string[input_index + 2]) &
-                0b0000_0011) << 6) | ((self.table_index(input_string[input_index + 3])));
+            result[output_index + 2] = ((self.table_index(input_string[input_index + 2]) & 0b0000_0011) << 6) |
+                ((self.table_index(input_string[input_index + 3])));
             output_index += 3;
             input_index += 4;
         }
