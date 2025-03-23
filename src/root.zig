@@ -74,6 +74,17 @@ pub const Base64 = struct {
         return try std.math.divFloor(usize, input.len, 4) * 3;
     }
 
+    fn full_chunk_decode(self: Base64, input_string: []const u8, output_string: []u8, output_index: usize, input_index: usize) void {
+        output_string[output_index + 0] = (self.table_index(input_string[input_index]) << 2) |
+            ((self.table_index(input_string[input_index + 1]) & 0b0011_0000) >> 4);
+
+        output_string[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4) |
+            ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
+
+        output_string[output_index + 2] = ((self.table_index(input_string[input_index + 2]) & 0b0000_0011) << 6) |
+            ((self.table_index(input_string[input_index + 3])));
+    }
+
     pub fn decode(self: Base64, alloc: std.mem.Allocator, input_string: []const u8) ![]u8 {
         if (input_string.len == 0) {
             return "";
@@ -87,14 +98,7 @@ pub const Base64 = struct {
         var output_index: usize = 0;
 
         while (input_index < (input_string.len - 4)) {
-            result[output_index + 0] = (self.table_index(input_string[input_index]) << 2) |
-                ((self.table_index(input_string[input_index + 1]) & 0b0011_0000) >> 4);
-
-            result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4) |
-                ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
-
-            result[output_index + 2] = ((self.table_index(input_string[input_index + 2]) & 0b0000_0011) << 6) |
-                ((self.table_index(input_string[input_index + 3])));
+            full_chunk_decode(self, input_string, result, output_index, input_index);
             output_index += 3;
             input_index += 4;
         }
@@ -113,14 +117,7 @@ pub const Base64 = struct {
 
             result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4);
         } else if (pad_char_count == 0) {
-            result[output_index + 0] = (self.table_index(input_string[input_index]) << 2) |
-                ((self.table_index(input_string[input_index + 1]) & 0b0011_0000) >> 4);
-
-            result[output_index + 1] = ((self.table_index(input_string[input_index + 1]) & 0b0000_1111) << 4) |
-                ((self.table_index(input_string[input_index + 2]) & 0b0011_1100) >> 2);
-
-            result[output_index + 2] = ((self.table_index(input_string[input_index + 2]) & 0b0000_0011) << 6) |
-                ((self.table_index(input_string[input_index + 3])));
+            full_chunk_decode(self, input_string, result, output_index, input_index);
         }
 
         return result;
